@@ -10,8 +10,9 @@
 #define SHM_W 0200
 
 int main(int argc, char** argv){
+    const int BUFFER_SIZE = 10;
     struct shm_struct{
-        int buffer[10];
+        int buffer[BUFFER_SIZE];
         unsigned empty;
         unsigned sent;
     };
@@ -36,7 +37,7 @@ int main(int argc, char** argv){
     if (pid != 0){
         /* here's the parent, acting as producer */
         while (var1 < 100){
-            if (index > 9){
+            if (index > BUFFER_SIZE-1){
                 index = 0;
             }
 
@@ -67,10 +68,10 @@ int main(int argc, char** argv){
             recieved++;
             index++;
 
-            if (index > 9){
+            if (index > BUFFER_SIZE-1){
                 index = 0;
             }
-            if (shmp->empty == 0 && (shmp->sent - recieved) > 10){
+            if (shmp->empty == 0 && (shmp->sent - recieved) > BUFFER_SIZE){
                 index = 0;
                 shmp->empty = 0;
             }
