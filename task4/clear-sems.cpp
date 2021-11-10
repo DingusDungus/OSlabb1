@@ -16,25 +16,12 @@ int main(int argc, char** argv) {
 
   pid = fork();
   if (pid) {
-    // parent
-    for (i = 0; i < 100; i++) {
-      sem_wait(sem_id1);
-      printf("A: %d\n", i);
-      fflush(stdout);
-      sem_post(sem_id2);
-    }
     sem_close(sem_id1);
     sem_close(sem_id2);
     sem_unlink(semName1);
     sem_unlink(semName2);
   } else {
     // child
-    for (i = 0; i < 100; i++) {
-      sem_wait(sem_id2);
-      printf("B: %d\n", i);
-      fflush(stdout);
-      sem_post(sem_id1);
-    }
     sem_close(sem_id1);
     sem_close(sem_id2);
   }
