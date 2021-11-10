@@ -80,9 +80,7 @@ int main(int argc, char** argv) {
         /* here's the child, acting as consumer */
         while (var2 < 100) {
             // while ((shmp->sent - recieved) <= 0);
-            if ((shmp->sent - shmp->recieved) <= 0) {
-                sem_wait(sem_id2);
-            }
+            sem_wait(sem_id2);
             /* read from shmem */
             var2 = shmp->buffer[index];
             printf("Received %d from index %d\n", var2, index);
