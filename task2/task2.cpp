@@ -9,9 +9,9 @@
 #define SHM_R 0400
 #define SHM_W 0200
 
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
     const int BUFFER_SIZE = 10;
-    struct shm_struct{
+    struct shm_struct {
         int buffer[BUFFER_SIZE];
         unsigned empty;
         unsigned sent;
@@ -34,16 +34,17 @@ int main(int argc, char** argv){
     shmp->sent = 0;
     pid = fork();
 
-    if (pid != 0){
+    if (pid != 0) {
         /* here's the parent, acting as producer */
-        while (var1 < 100){
-            if (index > BUFFER_SIZE-1){
+        while (var1 < 100) {
+            if (index > BUFFER_SIZE - 1) {
                 index = 0;
             }
 
             /* write to shmem */
             var1++;
-            while (shmp->empty == 0);
+            while (shmp->empty == 0)
+                ;
             printf("Sending %d to index %d\n", var1, index);
             fflush(stdout);
             shmp->buffer[index] = var1;
@@ -55,12 +56,12 @@ int main(int argc, char** argv){
         }
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
-    }
-    else{
+    } else {
         /* here's the child, acting as consumer */
         unsigned recieved = 0;
-        while (var2 < 100){
-            while ((shmp->sent - recieved) <= 0);
+        while (var2 < 100) {
+            while ((shmp->sent - recieved) <= 0)
+                ;
             /* read from shmem */
             var2 = shmp->buffer[index];
             printf("Received %d from index %d\n", var2, index);
@@ -68,14 +69,13 @@ int main(int argc, char** argv){
             recieved++;
             index++;
 
-            if (index > BUFFER_SIZE-1){
+            if (index > BUFFER_SIZE - 1) {
                 index = 0;
             }
-            if (shmp->empty == 0 && (shmp->sent - recieved) > BUFFER_SIZE){
+            if (shmp->empty == 0 && (shmp->sent - recieved) > BUFFER_SIZE) {
                 index = 0;
                 shmp->empty = 0;
-            }
-            else{
+            } else {
                 shmp->empty = 1;
             }
 
