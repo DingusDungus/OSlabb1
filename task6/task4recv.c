@@ -9,7 +9,7 @@
 #define PERMS 0644
 struct my_msgbuf {
    long mtype;
-   char mtext[13];
+   int intBuf;
 };
 
 int main(void) {
@@ -18,6 +18,8 @@ int main(void) {
    int toend;
    key_t key;
    int len;
+   system("touch msgq.txt");
+   int count = -1;
 
    if ((key = ftok("msgq.txt", 'B')) == -1) {
       perror("ftok");
@@ -29,21 +31,20 @@ int main(void) {
       exit(1);
    }
 
-   buf.mtext[0] = 'R';
-   buf.mtext[1] = '\0';
-
    printf("message queue: ready to receive messages.\n");
 
    for(;;) { /* normally receiving never ends but just to make conclusion */
              /* this program ends with string of end */
-      if (msgrcv(msqid, &buf, sizeof(buf.mtext), 0, 0) == -1) {
+      if (count == 49)
+      break;
+      if (msgrcv(msqid, &buf, sizeof(buf.intBuf), 0, 0) == -1) {
          perror("msgrcv");
          exit(1);
+      } else
+      {
+         count++;
       }
-      printf("recvd: \"%s\"\n", buf.mtext);
-      toend = strcmp(buf.mtext,"end");
-      if (toend == 0)
-      break;
+      printf("recvd: \"%d\"\n", buf.intBuf);
    }
    if (msgctl(msqid, IPC_RMID, NULL) == -1) {
       perror("msgctl");

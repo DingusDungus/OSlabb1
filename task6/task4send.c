@@ -13,7 +13,7 @@
 
 struct my_msgbuf {
    long mtype;
-   char mtext[13];
+   int intBuf;
 };
 
 int main(void) {
@@ -21,7 +21,6 @@ int main(void) {
    int msqid;
    int len;
    key_t key;
-   system("touch msgq.txt");
    time_t t;
    srand((unsigned) time(&t));
    int bufInt = 0;
@@ -40,20 +39,11 @@ int main(void) {
    buf.mtype = 1; /* we don't really care in this case */
 
    for (int i = 0;i < 50;i++) {
-      bufInt = (rand() % INT_MAX * 2) - INT_MIN;
-      sprintf(buf.mtext, "%d", bufInt);
-      printf("Sending iteration: %d\n", i);
-
-      len = strlen(buf.mtext);
-      buf.mtext[12] = '\0';
-      if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
+      buf.intBuf = (rand() % INT_MAX * 2) - INT_MIN;
+      printf("Sending iteration: %d Number: %d\n", i, buf.intBuf); fflush(stdout);
+      if (msgsnd(msqid, &buf, sizeof(buf.intBuf), 0) == -1)
          perror("msgsnd");
-      sleep(1);
    }
-   strcpy(buf.mtext, "end");
-   len = strlen(buf.mtext);
-   if (msgsnd(msqid, &buf, len+1, 0) == -1) /* +1 for '\0' */
-      perror("msgsnd");
 
    printf("message queue: done sending messages.\n");
    return 0;
