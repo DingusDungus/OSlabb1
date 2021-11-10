@@ -11,8 +11,8 @@
 
 // No buffer
 
-int main(int argc, char** argv){
-    struct shm_struct{
+int main(int argc, char** argv) {
+    struct shm_struct {
         int buffer;
         unsigned empty;
     };
@@ -30,12 +30,13 @@ int main(int argc, char** argv){
     shmp = (struct shm_struct*)shmat(shmid, addr, 0);
     shmp->empty = 0;
     pid = fork();
-    if (pid != 0){
+    if (pid != 0) {
         /* here's the parent, acting as producer */
-        while (var1 < 100){
+        while (var1 < 100) {
             /* write to shmem */
             var1++;
-            while (shmp->empty == 1); /* busy wait until the buffer is empty */
+            while (shmp->empty == 1)
+                ; /* busy wait until the buffer is empty */
             shmp->buffer = var1;
             shmp->empty = 1;
             printf("Sending %d\n", var1);
@@ -45,12 +46,12 @@ int main(int argc, char** argv){
         }
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
-    }
-    else{
+    } else {
         /* here's the child, acting as consumer */
-        while (var2 < 100){
+        while (var2 < 100) {
             /* read from shmem */
-            while (shmp->empty == 0); /* busy wait until there is something */
+            while (shmp->empty == 0)
+                ; /* busy wait until there is something */
             var2 = shmp->buffer;
             shmp->empty = 0;
             printf("Received %d\n", var2);
