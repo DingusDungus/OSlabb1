@@ -2,60 +2,59 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-struct threadArgs 
+struct threadArgs
 {
     int id;
-    int chopsticks[5];
-    int leftGrabbed;
-    int rightGrabbed;
+    /*int leftGrabbed;*/
+    /*int rightGrabbed;*/
 };
 
 // Shared Variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-double bankAccountBalance = 0;
 
-void deposit(double amount) {
-    bankAccountBalance += amount;
+// philosopher/thread logic
+void logic(unsigned long id) {
+    unsigned int leftGrabbed = 0; // set to 0, no chopstick.
+    unsigned int rightGrabbed = 0; // set to 0, no chopstick.
+    unsigned int hasEaten = 0; // set to 0, has not eaten.
+    int pos = id+1;
+    pthread_mutex_lock(&lock);
+    printf("Im philosopher %d\n", pos);
+    while (hasEaten == 0) {
+
+    }
+    pthread_mutex_unlock(&lock);
 }
 
-void withdraw(double amount) {
-    bankAccountBalance -= amount;
-}
-
-// utility function to identify even-odd numbers
-unsigned odd(unsigned long num) {
-    return num % 2;
-}
-
-// simulate id performing 1000 transactions
-void grab(unsigned long id) {
-
-}
-
-void* child(void* params) {
-    struct threadArgs *args = (struct threadArgs*) params;
-    
+void* child(void* buf) {
+    unsigned long id = (unsigned long)buf;
+    logic(id);
+    printf("blablablabl\n");
     return NULL;
 }
 
 int main(int argc, char** argv) {
     pthread_t *children;
-    unsigned long id = 0;
+    unsigned long id = 1;
     unsigned long nThreads = 5;
 
     int chopsticks[5];
-
+    // initialize array with chopsticks.
+    // chopstick = 1, no chopstick = 0
+    for (int i = 0; i < 5; i++) {
+      chopsticks[i] = 1;
+      printf("testtest \n");
+    }
     struct threadArgs* args;
 
-    if (argc > 1)
-        nThreads = atoi(argv[1]);
     children = malloc( nThreads * sizeof(pthread_t) );
     for (id = 1; id < nThreads; id++)
         pthread_create(&(children[id-1]), NULL, child, (void*)id);
-    do1000Transactions(0); // main thread work (id=0)
+    logic(0); // main thread work (id=1)
+      printf("after logic \n");
     for (id = 1; id < nThreads; id++)
         pthread_join(children[id-1], NULL);
-    printf("\nThe final account balance with %lu threads is $%.2f.\n\n", nThreads, bankAccountBalance);
+    printf("\nNumber of threads is %lu", nThreads);
     free(children);
     pthread_mutex_destroy(&lock);
     return 0;
