@@ -15,6 +15,7 @@ void* child(void* params) {
 	free(args);
 }
 
+
 int main(int argc, char** argv) {
 	pthread_t* children; // dynamic array of child threads
 	struct threadArgs* args; // argument buffer

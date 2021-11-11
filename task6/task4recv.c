@@ -36,7 +36,7 @@ int main(void) {
    for(;;) { /* normally receiving never ends but just to make conclusion */
              /* this program ends with string of end */
       if (count == 49)
-      break;
+         break;
       if (msgrcv(msqid, &buf, sizeof(buf.intBuf), 0, 0) == -1) {
          perror("msgrcv");
          exit(1);
