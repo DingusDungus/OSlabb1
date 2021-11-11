@@ -17,7 +17,7 @@ void* child(void* params) {
 }
 
 int main(int argc, char** argv) {
-  pthread_t* children;	    // dynamic array of child threads
+  pthread_t* children;      // dynamic array of child threads
   struct threadArgs* args;  // argument buffer
   unsigned int numThreads = 0;
   // get desired # of threads
@@ -30,9 +30,9 @@ int main(int argc, char** argv) {
     args[id].id = id;
     args[id].numThreads = numThreads;
     pthread_create(&(children[id]),    // our handle for the child
-      NULL,       // attributes of the child
-      child,       // the function it should run
-      (void*)&args[id]);  // args to that function
+                   NULL,               // attributes of the child
+                   child,              // the function it should run
+                   (void*)&args[id]);  // args to that function
   }
   printf("I am the parent (main) thread.\n");
 
@@ -41,9 +41,9 @@ int main(int argc, char** argv) {
   }
   for (unsigned int id = 0; id < numThreads; id++) {
     printf("id is %d, and my squared id is %d\n", args[id].id,
-	   args[id].squaredId);
+           args[id].squaredId);
   }
-  free(args);	   // deallocate args vector
+  free(args);      // deallocate args vector
   free(children);  // deallocate array
   return 0;
 }
