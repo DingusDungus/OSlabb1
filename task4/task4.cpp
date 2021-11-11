@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     volatile struct shm_struct* shmp = NULL;
     char* addr = NULL;
     pid_t pid = -1;
-    sem_t* sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 1);
+    sem_t* sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 10);
     sem_t* sem_id2 = sem_open(semName2, O_CREAT, O_RDWR, 0);
     int var1 = 0, var2 = 0, shmid = -1;
     struct shmid_ds* shm_buf;
@@ -40,9 +40,6 @@ int main(int argc, char** argv) {
     shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
     shmp = (struct shm_struct*)shmat(shmid, addr, 0);
     index = 0;
-    shmp->empty = 1;
-    shmp->sent = 0;
-    shmp->recieved = 0;
     pid = fork();
 
     if (pid != 0) {
@@ -51,16 +48,10 @@ int main(int argc, char** argv) {
             if (index > BUFFER_SIZE - 1) {
                 index = 0;
             }
-            if ((shmp->sent - shmp->recieved) > BUFFER_SIZE) {
-                sem_post(sem_id2);
-            }
-
             /* write to shmem */
             var1++;
             // while (shmp->empty == 0);
-            if (shmp->empty == 0) {
-                sem_wait(sem_id1);
-            }
+            sem_wait(sem_id1);
             printf("Sending %d to index %d\n", var1, index);
             fflush(stdout);
             shmp->buffer[index] = var1;
@@ -79,7 +70,6 @@ int main(int argc, char** argv) {
     } else {
         /* here's the child, acting as consumer */
         while (var2 < 100) {
-            // while ((shmp->sent - recieved) <= 0);
             sem_wait(sem_id2);
             /* read from shmem */
             var2 = shmp->buffer[index];
@@ -87,17 +77,9 @@ int main(int argc, char** argv) {
             fflush(stdout);
             shmp->recieved++;
             index++;
-
+            sem_post(sem_id1);
             if (index > BUFFER_SIZE - 1) {
                 index = 0;
-            }
-            if (shmp->empty == 0 &&
-                (shmp->sent - shmp->recieved) > BUFFER_SIZE) {
-                index = 0;
-                shmp->empty = 0;
-            } else {
-                shmp->empty = 1;
-                sem_post(sem_id1);
             }
 
             randomSleep = rand() % 20 + 1;
