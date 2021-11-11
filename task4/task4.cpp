@@ -45,9 +45,9 @@ int main(int argc, char** argv) {
             if (index > BUFFER_SIZE - 1) {
                 index = 0;
             }
-
             /* write to shmem */
             var1++;
+            // while (shmp->empty == 0);
             sem_wait(sem_id1);
             printf("Sending %d to index %d\n", var1, index);
             fflush(stdout);
@@ -66,9 +66,6 @@ int main(int argc, char** argv) {
     } else {
         /* here's the child, acting as consumer */
         while (var2 < 100) {
-            if (index > BUFFER_SIZE - 1) {
-                index = 0;
-            }
             sem_wait(sem_id2);
             /* read from shmem */
             var2 = shmp->buffer[index];
@@ -76,6 +73,9 @@ int main(int argc, char** argv) {
             fflush(stdout);
             index++;
             sem_post(sem_id1);
+            if (index > BUFFER_SIZE - 1) {
+                index = 0;
+            }
 
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
