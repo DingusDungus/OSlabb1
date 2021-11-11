@@ -1,61 +1,181 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <time.h> /* time */
+#include <unistd.h>
+
+
+pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
 
 struct threadArgs 
 {
     int id;
-    int chopsticks[5];
+    int *chopsticks;
     int leftGrabbed;
     int rightGrabbed;
 };
 
+void initChopsticks(int *chopsticks)
+{
+    for (int i = 0;i < 5;i++)
+    {
+        chopsticks[i] = 1;
+    }
+
+}
+
 // Shared Variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-double bankAccountBalance = 0;
 
-void deposit(double amount) {
-    bankAccountBalance += amount;
+int grabLeft(unsigned long id, int *chopsticks) 
+{
+    if (id == 0)
+    {
+        if (chopsticks[4] == 1)
+        {
+            return 1;
+        }
+        else 
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        if (chopsticks[id - 1] == 1)
+        {
+            return 1;
+        }
+        else 
+        {
+            return -1;
+        }
+    }
 }
 
-void withdraw(double amount) {
-    bankAccountBalance -= amount;
+int grabRight(unsigned long id, int *chopsticks) 
+{
+    if (id == 4)
+    {
+        if (chopsticks[0] == 1)
+        {
+            chopsticks[0] = 0;
+            return 1;
+        }
+        else 
+        {
+            return -1;
+        }
+    }
+    else
+    {
+        if (chopsticks[id + 1] == 1)
+        {
+            chopsticks[id + 1] = 0;
+            return 1;
+        }
+        else 
+        {
+            return -1;
+        }
+    }
 }
 
-// utility function to identify even-odd numbers
-unsigned odd(unsigned long num) {
-    return num % 2;
-}
-
-// simulate id performing 1000 transactions
-void grab(unsigned long id) {
-
+void releaseChopsticks(unsigned long id, int *chopsticks)
+{
+    if (id == 0)
+    {
+        chopsticks[4] = 1;
+        chopsticks[1] = 1;
+    }
+    else if (id == 4)
+    {
+        chopsticks[3] = 1;
+        chopsticks[0] = 1;
+    }
+    else
+    {
+        chopsticks[id - 1] = 1;
+        chopsticks[id + 1] = 1;
+    } 
 }
 
 void* child(void* params) {
+    time_t t;
+    srand((unsigned)time(&t));
     struct threadArgs *args = (struct threadArgs*) params;
-    
+    printf("Thread %d joined the table, waiting...\n", args->id);
+    int randomSleep = (rand() % 8) + 2;
+    sleep(randomSleep);
+    fflush(stdout);
+
+    while (args->leftGrabbed == 0)
+    {
+        if (grabLeft(args->id, args->chopsticks) == 1)
+        {
+            printf("Thread %d grabbed left chopstick, waiting...\n", args->id);
+            fflush(stdout);
+            args->leftGrabbed = 1;
+            randomSleep = (rand() % 3) + 1;
+            sleep(randomSleep);
+        }
+        else
+        {
+            printf("Thread %d tried to grab its left chopstick\n", args->id);
+            fflush(stdout);
+        }
+    }
+    while (args->rightGrabbed == 0)
+    {
+        if (grabRight(args->id, args->chopsticks) == 1)
+        {
+            printf("Thread %d grabbed right chopstick, eating...\n", args->id);
+            fflush(stdout);
+            args->rightGrabbed = 1;
+            randomSleep = (rand() % 10) + 10;
+            sleep(randomSleep);
+        }
+        else
+        {
+            printf("Thread %d tried to grab its right chopstick\n", args->id);
+            fflush(stdout);
+        }
+    }
+    printf("Thread %d lays down its chopsticks on the table\n", args->id);
+    fflush(stdout);
+
+    free(args);
+
     return NULL;
 }
 
 int main(int argc, char** argv) {
     pthread_t *children;
-    unsigned long id = 0;
-    unsigned long nThreads = 5;
+    unsigned int id = 0;
+    unsigned int nThreads = 5;
 
     int chopsticks[5];
+    initChopsticks(chopsticks);
 
     struct threadArgs* args;
 
     if (argc > 1)
         nThreads = atoi(argv[1]);
     children = malloc( nThreads * sizeof(pthread_t) );
-    for (id = 1; id < nThreads; id++)
-        pthread_create(&(children[id-1]), NULL, child, (void*)id);
-    do1000Transactions(0); // main thread work (id=0)
-    for (id = 1; id < nThreads; id++)
+    for (id = 0; id < nThreads; id++) {
+        args = malloc(sizeof(struct threadArgs));
+		args->id = id;
+		args->chopsticks = chopsticks;
+        args->leftGrabbed = 0;
+        args->rightGrabbed = 0;
+        fflush(stdout);
+        pthread_create(&(children[id]), NULL, child, (void*)args);
+    }
+    sleep(100);
+    for (id = 0; id < nThreads; id++)
         pthread_join(children[id-1], NULL);
-    printf("\nThe final account balance with %lu threads is $%.2f.\n\n", nThreads, bankAccountBalance);
+    printf("\nAll %d have eaten.\n\n", nThreads);
     free(children);
     pthread_mutex_destroy(&lock);
     return 0;
