@@ -9,17 +9,14 @@
 #define SHM_R 0400
 #define SHM_W 0200
 
+// No buffer
+
 int main(int argc, char** argv) {
-    const int BUFFER_SIZE = 10;
     struct shm_struct {
-        int buffer[BUFFER_SIZE];
+        int buffer;
         unsigned empty;
-        unsigned sent;
-        unsigned recieved;
     };
-    unsigned index;
     float randomSleep = 0;
-    randomSleep = 0.0111;
     volatile struct shm_struct* shmp = NULL;
     char* addr = NULL;
     pid_t pid = -1;
@@ -31,31 +28,19 @@ int main(int argc, char** argv) {
     /* allocate a chunk of shared memory */
     shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
     shmp = (struct shm_struct*)shmat(shmid, addr, 0);
-    index = 0;
-    shmp->empty = 1;
-    shmp->sent = 0;
+    shmp->empty = 0;
     pid = fork();
-
     if (pid != 0) {
         /* here's the parent, acting as producer */
         while (var1 < 100) {
-            if (index > BUFFER_SIZE - 1) {
-                index = 0;
-            }
-            if ((shmp->sent - shmp->recieved) >= BUFFER_SIZE) {
-                shmp->empty = 0;
-            }else {
-                shmp->empty = 1;
-            }
-
             /* write to shmem */
             var1++;
-            while (shmp->empty == 0);
+            while (shmp->empty == 1)
+                ; /* busy wait until the buffer is empty */
+            shmp->buffer = var1;
+            shmp->empty = 1;
+            printf("Sending %d\n", var1);
             fflush(stdout);
-            shmp->buffer[index] = var1;
-            shmp->sent++;
-            index++;
-
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
         }
@@ -63,30 +48,18 @@ int main(int argc, char** argv) {
         shmctl(shmid, IPC_RMID, shm_buf);
     } else {
         /* here's the child, acting as consumer */
-        unsigned recieved = 0;
         while (var2 < 100) {
-            while ((shmp->sent - recieved) <= 0);
             /* read from shmem */
-            var2 = shmp->buffer[index];
-            printf("Received %d from index %d\n", var2, index);
+            while (shmp->empty == 0)
+                ; /* busy wait until there is something */
+            var2 = shmp->buffer;
+            shmp->empty = 0;
+            printf("Received %d\n", var2);
             fflush(stdout);
-            shmp->recieved++;
-            index++;
-
-            if (index > BUFFER_SIZE - 1) {
-                index = 0;
-            }
-            if ((shmp->sent - shmp->recieved) >= BUFFER_SIZE) {
-                shmp->empty = 0;
-            } else {
-                shmp->empty = 1;
-            }
-
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
         }
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
     }
-    return 0;
 }
