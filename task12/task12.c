@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+struct threadArgs 
+{
+    int id;
+    int chopsticks[5];
+    int leftGrabbed;
+    int rightGrabbed;
+};
+
 // Shared Variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 double bankAccountBalance = 0;
@@ -21,14 +29,12 @@ unsigned odd(unsigned long num) {
 
 // simulate id performing 1000 transactions
 void grab(unsigned long id) {
-    pthread_mutex_lock(&lock);
 
-    pthread_mutex_unlock(&lock);
 }
 
-void* child(void* buf) {
-    unsigned long childID = (unsigned long)buf;
-    do1000Transactions(childID);
+void* child(void* params) {
+    struct threadArgs *args = (struct threadArgs*) params;
+    
     return NULL;
 }
 
@@ -38,11 +44,8 @@ int main(int argc, char** argv) {
     unsigned long nThreads = 5;
 
     int chopsticks[5];
-    struct threadArgs 
-    {
-        int id;
-        int chopsticks[5];
-    };
+
+    struct threadArgs* args;
 
     if (argc > 1)
         nThreads = atoi(argv[1]);
