@@ -9,6 +9,17 @@
 pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
 
+void printChops(int *chopsticks)
+{
+    for (int i = 0;i < 5;i++)
+    {
+        printf("%d", chopsticks[i]);
+        fflush(stdout);
+    }
+    printf("\n");
+    fflush(stdout);
+}
+
 struct threadArgs {
     int id;
     int *chopsticks;
@@ -26,7 +37,6 @@ void initChopsticks(int *chopsticks)
 }
 
 // Shared Variables
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 int grabLeft(unsigned long id, int *chopsticks) 
 {
@@ -34,6 +44,7 @@ int grabLeft(unsigned long id, int *chopsticks)
     {
         if (chopsticks[4] == 1)
         {
+            chopsticks[4] = 0;
             return 1;
         }
         else 
@@ -45,6 +56,7 @@ int grabLeft(unsigned long id, int *chopsticks)
     {
         if (chopsticks[id - 1] == 1)
         {
+            chopsticks[id - 1] = 0;
             return 1;
         }
         else 
@@ -112,11 +124,13 @@ void* child(void* params) {
 
     while (args->leftGrabbed == 0)
     {
+        sleep(5);
         if (grabLeft(args->id, args->chopsticks) == 1)
         {
             printf("Thread %d grabbed left chopstick, waiting...\n", args->id);
             fflush(stdout);
             args->leftGrabbed = 1;
+            printChops(args->chopsticks);
             randomSleep = (rand() % 3) + 1;
             sleep(randomSleep);
         }
@@ -128,11 +142,13 @@ void* child(void* params) {
     }
     while (args->rightGrabbed == 0)
     {
+        sleep(5);
         if (grabRight(args->id, args->chopsticks) == 1)
         {
             printf("Thread %d grabbed right chopstick, eating...\n", args->id);
             fflush(stdout);
             args->rightGrabbed = 1;
+            printChops(args->chopsticks);
             randomSleep = (rand() % 10) + 10;
             sleep(randomSleep);
         }
@@ -172,11 +188,10 @@ int main(int argc, char** argv) {
         fflush(stdout);
         pthread_create(&(children[id]), NULL, child, (void*)args);
     }
-    sleep(100);
-    for (id = 0; id < nThreads; id++)
-        pthread_join(children[id-1], NULL);
+    for (id = 0; id < nThreads; id++) {
+        pthread_join(children[id], NULL);
+    }
     printf("\nAll %d have eaten.\n\n", nThreads);
     free(children);
-    pthread_mutex_destroy(&lock);
     return 0;
 }
