@@ -4,12 +4,6 @@
 #include <time.h> /* time */
 #include <unistd.h>
 
-struct threadArgs {
-    int id;
-    /*int leftGrabbed;*/
-    /*int rightGrabbed;*/
-};
-
 // Shared Variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 int chopsticks[5];
@@ -52,7 +46,7 @@ void think2To8(unsigned int pos) {
     sleep(randomSleep);
 }
 
-void eat(unsigned int pos){
+void eat(unsigned int pos) {
     int randomSleep = (rand() % 10) + 10;
     printf("Im philosopher %d, ", pos);
     printf("Eating for %ds...\n", randomSleep);
@@ -128,10 +122,10 @@ void logic(unsigned long id) {
                rightGrabbed);
         fflush(stdout);
         if (leftGrabbed == 1 && rightGrabbed == 1) {
-            eat(pos); // sleeps between 10-20 seconds.
+            eat(pos);  // sleeps between 10-20 seconds.
             pthread_mutex_lock(&lock);
-            chopsticks[leftStickPos] = 1; // Put down left sick
-            chopsticks[rightStickPos] = 1; // Put down right sick
+            chopsticks[leftStickPos] = 1;   // Put down left sick
+            chopsticks[rightStickPos] = 1;  // Put down right sick
             pthread_mutex_unlock(&lock);
         }
     }
@@ -159,7 +153,6 @@ int main(int argc, char** argv) {
         printf("chopstick %d, value %d \n", i, chopsticks[i]);
         fflush(stdout);
     }
-    struct threadArgs* args;
 
     children = malloc(nThreads * sizeof(pthread_t));
     for (id = 1; id < nThreads; id++)
