@@ -236,11 +236,11 @@ void *child(void *params)
     int randomSleep = (rand() % 8) + 2;
     sleep(randomSleep);
     fflush(stdout);
+    
     while (chopStickScheduler(args) == 0);
     grabChopsticks(args);
 
     free(args);
-
     return NULL;
 }
 
