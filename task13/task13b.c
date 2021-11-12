@@ -255,7 +255,6 @@ int main(int argc, char **argv)
         fflush(stdout);
         pthread_create(&(children[id]), NULL, child, (void *)args);
     }
-    pthread_mutex_lock(&lock);
     for (id = 0; id < nThreads; id++)
     {
         pthread_join(children[id], NULL);
