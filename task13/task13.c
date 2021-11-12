@@ -163,6 +163,8 @@ void *child(void *params)
         }
         printf("Thread %d lays down its chopsticks on the table\n", args->id);
         fflush(stdout);
+        args->leftGrabbed = 0;
+        args->rightGrabbed = 0;
         releaseChopsticks(args);
     }
     free(args);
