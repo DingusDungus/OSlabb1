@@ -6,8 +6,7 @@
 #include <unistd.h>
 
 
-pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t lock2 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 void printChops(int *chopsticks)
 {
@@ -42,25 +41,31 @@ int grabLeft(unsigned long id, int *chopsticks)
 {
     if (id == 0)
     {
+        pthread_mutex_lock(&lock);
         if (chopsticks[4] == 1)
         {
             chopsticks[4] = 0;
+            pthread_mutex_unlock(&lock);
             return 1;
         }
         else 
         {
+            pthread_mutex_unlock(&lock);
             return -1;
         }
     }
     else
     {
+        pthread_mutex_lock(&lock);
         if (chopsticks[id - 1] == 1)
         {
             chopsticks[id - 1] = 0;
+            pthread_mutex_unlock(&lock);
             return 1;
         }
         else 
         {
+            pthread_mutex_unlock(&lock);
             return -1;
         }
     }
@@ -70,25 +75,31 @@ int grabRight(unsigned long id, int *chopsticks)
 {
     if (id == 4)
     {
+        pthread_mutex_lock(&lock);
         if (chopsticks[0] == 1)
         {
             chopsticks[0] = 0;
+            pthread_mutex_unlock(&lock);
             return 1;
         }
         else 
         {
+            pthread_mutex_unlock(&lock);
             return -1;
         }
     }
     else
     {
+        pthread_mutex_lock(&lock);
         if (chopsticks[id + 1] == 1)
         {
             chopsticks[id + 1] = 0;
+            pthread_mutex_unlock(&lock);
             return 1;
         }
         else 
         {
+            pthread_mutex_unlock(&lock);
             return -1;
         }
     }
@@ -193,5 +204,6 @@ int main(int argc, char** argv) {
     }
     printf("\nAll %d have eaten.\n\n", nThreads);
     free(children);
+    pthread_mutex_destroy(&lock);
     return 0;
 }
