@@ -123,6 +123,19 @@ void logic(unsigned long id) {
         printf("Ph %d left stick: %d rightstick: %d\n\n", pos, leftGrabbed,
                rightGrabbed);
         fflush(stdout);
+        // Drop left stick if we cant grab right.
+        if (leftGrabbed == 1 && rightGrabbed == 0){
+            printf(
+                "Ph %d Has left chopstick... but cant get right, dropping "
+                "left\n",
+                pos);
+            fflush(stdout);
+            pthread_mutex_lock(&lock);
+            chopsticks[leftStickPos] = 1;  // Put down left stick
+            leftGrabbed = 0;               // Put down left stick
+            pthread_mutex_unlock(&lock);
+        }
+        // Eat
         if (leftGrabbed == 1 && rightGrabbed == 1) {
             eat(pos);  // sleeps between 10-20 seconds.
             pthread_mutex_lock(&lock);
