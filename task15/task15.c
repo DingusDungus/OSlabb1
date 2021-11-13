@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-#define SIZE 4
+#define SIZE 1024
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
@@ -70,11 +70,11 @@ void mulRow(int row)
         c[row][i] = 0.0;
         for (int k = 0; k < SIZE; k++)
         {
-            pthread_mutex_lock(&lock);
+            /*pthread_mutex_lock(&lock);*/
             c[row][i] = c[row][i] + a[row][k] * b[k][i];
-            pthread_mutex_unlock(&lock);
+            /*pthread_mutex_unlock(&lock);*/
         }
-        
+
     }
 }
 

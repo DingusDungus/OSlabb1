@@ -38,7 +38,7 @@ matmul_seq()
         for (j = 0; j < SIZE; j++) {
             c[i][j] = 0.0;
             for (k = 0; k < SIZE; k++) {
-                
+
                 c[i][j] = c[i][j] + a[i][k] * b[k][j];
             }
         }
