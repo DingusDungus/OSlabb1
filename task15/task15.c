@@ -1,6 +1,7 @@
 /***************************************************************************
  *
- * Sequential version of Matrix-Matrix multiplication
+ * Parallel version of Matrix-Matrix multiplication
+ * task 15
  *
  ***************************************************************************/
 
@@ -70,9 +71,7 @@ void mulRow(int row)
         c[row][i] = 0.0;
         for (int k = 0; k < SIZE; k++)
         {
-            /*pthread_mutex_lock(&lock);*/
             c[row][i] = c[row][i] + a[row][k] * b[k][i];
-            /*pthread_mutex_unlock(&lock);*/
         }
 
     }
