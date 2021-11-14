@@ -16,8 +16,6 @@ static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
 static double c[SIZE][SIZE];
 
-pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
-
 static void
 init_matrix(void)
 {
