@@ -61,8 +61,6 @@ void mulRow(int row)
 void *child(void *id)
 {
     int row = (int)id;
-    printf("My row is %d\n", row);
-    fflush(stdout);
     init_matrix(row);
     pthread_barrier_wait(&barrier);
     mulRow(row);
@@ -77,7 +75,6 @@ int main(int argc, char **argv)
     children = malloc(SIZE * sizeof(pthread_t));
     for (id = 0; id < SIZE; id++)
     {
-        fflush(stdout);
         pthread_create(&(children[id]), NULL, child, (void *)id);
     }
     for (id = 0; id < SIZE; id++)
@@ -85,5 +82,4 @@ int main(int argc, char **argv)
         pthread_join(children[id], NULL);
     }
     free(children);
-    print_matrix();
 }

@@ -68,6 +68,7 @@ print_matrix(void)
             printf(" %7.2f", c[i][j]);
         printf("\n");
     }
+    fflush(stdout);
 }
 
 void mulRow(int start, int end)
@@ -90,8 +91,6 @@ void *child(void *params)
     struct threadArgs *args = (struct threadArgs *)params;
     int start = args->start;
     int end = args->end;
-    printf("My rows are %d to %d\n", start,end);
-    fflush(stdout);
     init_matrix(start, end);
     pthread_barrier_wait(&barrier);
     mulRow(start, end);
@@ -115,7 +114,6 @@ int main(int argc, char **argv)
         args = malloc(sizeof(struct threadArgs));
         args->start = work * (id);
         args->end = work * (id+1);
-        fflush(stdout);
         pthread_create(&(children[id]), NULL, child, (void *)args);
     }
     for (id = 0; id < NR_OF_THREADS; id++)
@@ -123,5 +121,4 @@ int main(int argc, char **argv)
         pthread_join(children[id], NULL);
     }
     free(children);
-    print_matrix();
 }
