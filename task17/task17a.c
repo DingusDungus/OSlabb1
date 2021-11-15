@@ -11,10 +11,17 @@
 #include <pthread.h>
 
 #define SIZE 1024
+#define NR_OF_THREADS 4
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
 static double c[SIZE][SIZE];
+
+struct threadArgs
+{
+    int start;
+    int end;
+};
 
 static void
 init_matrix(void)
@@ -62,42 +69,53 @@ print_matrix(void)
     }
 }
 
-void mulRow(int row)
+void mulRow(int start, int end)
 {
-    for (int i = 0; i < SIZE; i++)
-    {
-        c[row][i] = 0.0;
-        for (int k = 0; k < SIZE; k++)
-        {
-            c[row][i] = c[row][i] + a[row][k] * b[k][i];
-        }
+    int i, j, k;
 
+    for (i = 0; i < SIZE; i++)
+    {
+        for (j = start; j < end; j++)
+        {
+            c[i][j] = 0.0;
+            for (k = 0; k < SIZE; k++)
+                c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        }
     }
 }
 
-void *child(void *id)
+void *child(void *params)
 {
-    int row = (int)id;
-    printf("My row is %d\n", row);
+    struct threadArgs *args = (struct threadArgs *)params;
+    int start = args->start;
+    int end = args->end;
+    printf("My rows are %d to %d\n", start,end);
     fflush(stdout);
-    mulRow(row);
+    mulRow(start, end);
+    free(args);
     return NULL;
 }
 
+
 int main(int argc, char **argv)
 {
+    struct threadArgs *args;
     init_matrix();
 
     pthread_t *children;
     int id = 0;
 
-    children = malloc(SIZE * sizeof(pthread_t));
-    for (id = 0; id < SIZE; id++)
+    int work = SIZE/NR_OF_THREADS;
+    children = malloc(NR_OF_THREADS * sizeof(pthread_t));
+    for (id = 0; id < NR_OF_THREADS; id++)
     {
+        args = malloc(sizeof(struct threadArgs));
+        args->start = work * (id);
+        args->end = work * (id+1);
         fflush(stdout);
-        pthread_create(&(children[id]), NULL, child, (void *)id);
+        pthread_create(&(children[id]), NULL, child, (void *)args);
     }
-    for (id = 0; id < SIZE; id++)
+    for (id = 0; id < NR_OF_THREADS; id++)
     {
         pthread_join(children[id], NULL);
     }

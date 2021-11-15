@@ -1,7 +1,7 @@
 /***************************************************************************
  *
  * Parallel version of Matrix-Matrix multiplication
- * task 17, parallel init
+ * task 17, parallel init.
  *
  ***************************************************************************/
 
@@ -11,25 +11,50 @@
 #include <pthread.h>
 
 #define SIZE 1024
+#define NR_OF_THREADS 4
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
 static double c[SIZE][SIZE];
 pthread_barrier_t barrier;
-static void
-init_matrix(int row)
-{
-    int j;
 
-        for (j = 0; j < SIZE; j++)
+struct threadArgs
+{
+    int start;
+    int end;
+};
+
+static void
+init_matrix(int start, int end)
+{
+    int i, j;
+
+    for (i = 0; i < SIZE; i++)
+        for (j = start; j < end; j++)
         {
             /* Simple initialization, which enables us to easy check
-             * the correct answer. Each element in c will have the same
-             * value as SIZE after the matmul operation.
-             */
-            a[row][j] = 1.0;
-            b[row][j] = 1.0;
+	         * the correct answer. Each element in c will have the same
+	         * value as SIZE after the matmul operation.
+	         */
+            a[i][j] = 1.0;
+            b[i][j] = 1.0;
         }
+}
+
+static void
+matmul_seq()
+{
+    int i, j, k;
+
+    for (i = 0; i < SIZE; i++)
+    {
+        for (j = 0; j < SIZE; j++)
+        {
+            c[i][j] = 0.0;
+            for (k = 0; k < SIZE; k++)
+                c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        }
+    }
 }
 
 static void
@@ -45,42 +70,55 @@ print_matrix(void)
     }
 }
 
-void mulRow(int row)
+void mulRow(int start, int end)
 {
-    for (int i = 0; i < SIZE; i++)
-    {
-        c[row][i] = 0.0;
-        for (int k = 0; k < SIZE; k++)
-        {
-            c[row][i] = c[row][i] + a[row][k] * b[k][i];
-        }
+    int i, j, k;
 
+    for (i = 0; i < SIZE; i++)
+    {
+        for (j = start; j < end; j++)
+        {
+            c[i][j] = 0.0;
+            for (k = 0; k < SIZE; k++)
+                c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        }
     }
 }
 
-void *child(void *id)
+void *child(void *params)
 {
-    int row = (int)id;
-    printf("My row is %d\n", row);
+    struct threadArgs *args = (struct threadArgs *)params;
+    int start = args->start;
+    int end = args->end;
+    printf("My rows are %d to %d\n", start,end);
     fflush(stdout);
-    init_matrix(row);
+    init_matrix(start, end);
     pthread_barrier_wait(&barrier);
-    mulRow(row);
+    mulRow(start, end);
+    free(args);
     return NULL;
 }
 
+
 int main(int argc, char **argv)
 {
+    struct threadArgs *args;
+
     pthread_t *children;
     int id = 0;
     pthread_barrier_init(&barrier,NULL,SIZE);
-    children = malloc(SIZE * sizeof(pthread_t));
-    for (id = 0; id < SIZE; id++)
+
+    int work = SIZE/NR_OF_THREADS;
+    children = malloc(NR_OF_THREADS * sizeof(pthread_t));
+    for (id = 0; id < NR_OF_THREADS; id++)
     {
+        args = malloc(sizeof(struct threadArgs));
+        args->start = work * (id);
+        args->end = work * (id+1);
         fflush(stdout);
-        pthread_create(&(children[id]), NULL, child, (void *)id);
+        pthread_create(&(children[id]), NULL, child, (void *)args);
     }
-    for (id = 0; id < SIZE; id++)
+    for (id = 0; id < NR_OF_THREADS; id++)
     {
         pthread_join(children[id], NULL);
     }
