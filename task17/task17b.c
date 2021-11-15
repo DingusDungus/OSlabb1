@@ -91,6 +91,7 @@ void *child(void *params)
     struct threadArgs *args = (struct threadArgs *)params;
     int start = args->start;
     int end = args->end;
+    printf("My start is %d and my end is %d\n", start, end);
     init_matrix(start, end);
     pthread_barrier_wait(&barrier);
     mulRow(start, end);
