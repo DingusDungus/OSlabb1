@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 
     pthread_t *children;
     int id = 0;
-    pthread_barrier_init(&barrier,NULL,SIZE);
+    pthread_barrier_init(&barrier,NULL,NR_OF_THREADS);
 
     int work = SIZE/NR_OF_THREADS;
     children = malloc(NR_OF_THREADS * sizeof(pthread_t));
