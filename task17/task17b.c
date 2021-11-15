@@ -11,7 +11,7 @@
 #include <pthread.h>
 
 #define SIZE 1024
-#define NR_OF_THREADS 16
+#define NR_OF_THREADS 128
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
