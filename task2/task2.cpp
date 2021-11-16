@@ -10,16 +10,15 @@
 #define SHM_W 0200
 
 int main(int argc, char** argv) {
-    const int BUFFER_SIZE = 10;
+    const int BUFFER_SIZE = 10; //Size of shared buffer
     struct shm_struct {
-        int buffer[BUFFER_SIZE];
-        unsigned empty;
-        unsigned sent;
-        unsigned recieved;
+        int buffer[BUFFER_SIZE]; //Shared buffer
+        unsigned empty; //Variable for if buffer is full or not
+        unsigned sent; //Variable for producer sent
+        unsigned recieved; //Variable for consumer recieved
     };
-    unsigned index;
-    float randomSleep = 0;
-    randomSleep = 0.0111;
+    unsigned index; //Local index variable
+    float randomSleep; //Float variable for the sleeping length
     volatile struct shm_struct* shmp = NULL;
     char* addr = NULL;
     pid_t pid = -1;
@@ -32,59 +31,57 @@ int main(int argc, char** argv) {
     shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
     shmp = (struct shm_struct*)shmat(shmid, addr, 0);
     index = 0;
+    randomSleep = 0;
     shmp->empty = 1;
     shmp->sent = 0;
-    pid = fork();
+    pid = fork(); //Creates child process
 
     if (pid != 0) {
         /* here's the parent, acting as producer */
         while (var1 < 100) {
             if (index > BUFFER_SIZE - 1) {
-                index = 0;
+                index = 0; //Circular iteration through buffer
             }
             if ((shmp->sent - shmp->recieved) >= BUFFER_SIZE) {
-                shmp->empty = 0;
-            }else {
-                shmp->empty = 1;
+                shmp->empty = 0; //If producer sends too much it is stopped through active wait
             }
 
             /* write to shmem */
             var1++;
             while (shmp->empty == 0);
-            fflush(stdout);
-            shmp->buffer[index] = var1;
-            shmp->sent++;
-            index++;
+            shmp->buffer[index] = var1; //Writes to given position
+            shmp->sent++; //Increases sent amount
+            index++; //Increments index so producer writes on next position in array in next loop
 
-            randomSleep = rand() % 20 + 1;
-            sleep((randomSleep / 10));
+            randomSleep = rand() % 20 + 1; //Creates random sleep value
+            sleep((randomSleep / 10)); //Sleeps for random time
         }
+        /*Detaching from shared memory */
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
     } else {
         /* here's the child, acting as consumer */
-        unsigned recieved = 0;
         while (var2 < 100) {
-            while ((shmp->sent - recieved) <= 0);
+            while ((shmp->sent - shmp->recieved) <= 0);
             /* read from shmem */
-            var2 = shmp->buffer[index];
+            var2 = shmp->buffer[index]; //Reads on given position
             printf("Received %d from index %d\n", var2, index);
-            fflush(stdout);
-            shmp->recieved++;
-            index++;
+            shmp->recieved++; //increases read amount
+            index++; //Increments index so consumer reads on next position in array in next loop
 
             if (index > BUFFER_SIZE - 1) {
-                index = 0;
+                index = 0; //Circular iteration through buffer
             }
             if ((shmp->sent - shmp->recieved) >= BUFFER_SIZE) {
-                shmp->empty = 0;
+                shmp->empty = 0; //If producer sends too much it is stopped through active wait
             } else {
-                shmp->empty = 1;
+                shmp->empty = 1; //If consumer is up to speed with producer again, wake up producer
             }
 
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
         }
+        /*Detaching from shared memory */
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
     }

@@ -26,8 +26,8 @@ int main(int argc, char** argv) {
     volatile struct shm_struct* shmp = NULL;
     char* addr = NULL;
     pid_t pid = -1;
-    sem_t* sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 10);
-    sem_t* sem_id2 = sem_open(semName2, O_CREAT, O_RDWR, 0);
+    sem_t* sem_id1 = sem_open(semName1, O_CREAT, O_RDWR, 10); //Creates semophore for producer, starts at value 10
+    sem_t* sem_id2 = sem_open(semName2, O_CREAT, O_RDWR, 0);  //Creates semophore for consumer, starts at value 0
     int var1 = 0, var2 = 0, shmid = -1;
     struct shmid_ds* shm_buf;
     time_t t;
@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     shmid = shmget(IPC_PRIVATE, SHMSIZE, IPC_CREAT | SHM_R | SHM_W);
     shmp = (struct shm_struct*)shmat(shmid, addr, 0);
     index = 0;
-    pid = fork();
+    pid = fork(); //Creates child process
 
     if (pid != 0) {
         /* here's the parent, acting as producer */
@@ -47,16 +47,15 @@ int main(int argc, char** argv) {
             }
             /* write to shmem */
             var1++;
-            // while (shmp->empty == 0);
-            sem_wait(sem_id1);
+            sem_wait(sem_id1); //Decrememts producer semophore, if already 0 parent process waits til semophore > 0
             printf("Sending %d to index %d\n", var1, index);
-            fflush(stdout);
             shmp->buffer[index] = var1;
             index++;
-            sem_post(sem_id2);
+            sem_post(sem_id2); //Increases consumer semophore value
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
         }
+        /* Detaching from shared memory and closing semophores */
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
         sem_close(sem_id1);
@@ -66,13 +65,12 @@ int main(int argc, char** argv) {
     } else {
         /* here's the child, acting as consumer */
         while (var2 < 100) {
-            sem_wait(sem_id2);
+            sem_wait(sem_id2); //Decrememts consumer semophore, if already 0 parent process waits til semophore > 0
             /* read from shmem */
             var2 = shmp->buffer[index];
             printf("Received %d from index %d\n", var2, index);
-            fflush(stdout);
             index++;
-            sem_post(sem_id1);
+            sem_post(sem_id1); //Increases producer semophore value
             if (index > BUFFER_SIZE - 1) {
                 index = 0;
             }
@@ -80,6 +78,7 @@ int main(int argc, char** argv) {
             randomSleep = rand() % 20 + 1;
             sleep((randomSleep / 10));
         }
+        /* Detaching from shared memory and closing semophores */
         shmdt(addr);
         shmctl(shmid, IPC_RMID, shm_buf);
         sem_close(sem_id1);

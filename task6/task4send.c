@@ -13,7 +13,7 @@
 
 struct my_msgbuf {
    long mtype;
-   int intBuf;
+   int intBuf; //Integer to be sent
 };
 
 int main(void) {
@@ -30,7 +30,7 @@ int main(void) {
       exit(1);
    }
 
-   if ((msqid = msgget(key, PERMS)) == -1) {
+   if ((msqid = msgget(key, PERMS)) == -1) { //Connects to queue
       perror("msgget");
       exit(1);
    }
@@ -38,9 +38,9 @@ int main(void) {
    printf("message queue: ready to send messages.\n");
    buf.mtype = 1; /* we don't really care in this case */
 
-   for (int i = 0;i < 50;i++) {
-      buf.intBuf = (rand() % INT_MAX * 2) - INT_MIN;
-      printf("Sending iteration: %d Number: %d\n", i, buf.intBuf); fflush(stdout);
+   for (int i = 0;i < 50;i++) { //Sends messages for 50 times
+      buf.intBuf = (rand() % INT_MAX * 2) - INT_MIN; //Random number between INT_MAX - INT_MIN
+      printf("Sending iteration: %d Number: %d\n", i, buf.intBuf); //Sends random number
       if (msgsnd(msqid, &buf, sizeof(buf.intBuf), 0) == -1)
          perror("msgsnd");
    }
