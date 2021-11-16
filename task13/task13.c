@@ -10,22 +10,17 @@ pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
 struct threadArgs
 {
     int id;
-    struct tableContent *chopsticks;
-    int leftGrabbed;
-    int rightGrabbed;
 };
 
-struct tableContent
-{
-    int stickGrabbed;
-};
+int chopsticks[5];
 
-void printChops(struct tableContent *chopsticks)
+void printChops()
 {
+    //Prints chops (used mostly for testing)
     pthread_mutex_lock(&lock);
     for (int i = 0; i < 5; i++)
     {
-        printf("%d", chopsticks[i].stickGrabbed);
+        printf("%d", chopsticks[i]);
         fflush(stdout);
     }
     printf("\n");
@@ -33,11 +28,12 @@ void printChops(struct tableContent *chopsticks)
     pthread_mutex_unlock(&lock);
 }
 
-void initChopsticks(struct tableContent *chopsticks)
+void initChopsticks()
 {
+    //Inits chopsticks
     for (int i = 0; i < 5; i++)
     {
-        chopsticks[i].stickGrabbed = 1;
+        chopsticks[i] = 1;
     }
 }
 
@@ -45,17 +41,18 @@ void initChopsticks(struct tableContent *chopsticks)
 
 void releaseChopsticks(void *params)
 {
+    //Releases chopsticks
     struct threadArgs *args = params;
     pthread_mutex_lock(&lock);
     if (args->id == 0)
     {
-        args->chopsticks[0].stickGrabbed = 1;
-        args->chopsticks[4].stickGrabbed = 1;
+        chopsticks[0] = 1;
+        chopsticks[4] = 1;
     }
     else
     {
-        args->chopsticks[args->id - 1].stickGrabbed = 1;
-        args->chopsticks[args->id].stickGrabbed = 1;
+        chopsticks[args->id - 1]= 1;
+        chopsticks[args->id] = 1;
     }
     pthread_mutex_unlock(&lock);
 }
@@ -67,9 +64,9 @@ int grabLeft(void *params)
     pthread_mutex_lock(&lock);
     if (args->id == 0)
     {
-        if ((args->chopsticks[4].stickGrabbed == 1 && args->chopsticks[args->id].stickGrabbed == 1))
+        if ((chopsticks[4]== 1 && chopsticks[args->id] == 1)) //If condition breaks circular condition causing the deadlock
         {
-            args->chopsticks[4].stickGrabbed = 0;
+            chopsticks[4] = 0;
             returnInt = 1;
         }
         else
@@ -79,9 +76,9 @@ int grabLeft(void *params)
     }
     else
     {
-        if (args->chopsticks[args->id - 1].stickGrabbed == 1 && args->chopsticks[args->id].stickGrabbed == 1)
+        if (chopsticks[args->id - 1] == 1 && chopsticks[args->id] == 1) //If condition breaks circular condition causing the deadlock
         {
-            args->chopsticks[args->id - 1].stickGrabbed = 0;
+            chopsticks[args->id - 1] = 0;
             returnInt = 1;
         }
         else
@@ -100,9 +97,9 @@ int grabRight(void *params)
     int returnInt = 0;
 
     pthread_mutex_lock(&lock);
-    if (args->chopsticks[args->id].stickGrabbed == 1)
+    if (chopsticks[args->id] == 1) //Right function works exactly the same
     {
-        args->chopsticks[args->id].stickGrabbed = 0;
+        chopsticks[args->id] = 0;
         returnInt = 1;
     }
     else
@@ -120,51 +117,55 @@ void *child(void *params)
     srand((unsigned)time(&t));
     struct threadArgs *args = (struct threadArgs *)params;
     int loopAlways = 1;
+    int leftGrabbed = 0;
+    int rightGrabbed = 0;
+
+
     while (loopAlways)
     {
         printf("Thread %d joined the table, waiting...\n", args->id);
-        int randomSleep = (rand() % 8) + 2;
+        int randomSleep = (rand() % 8) + 2; //Gives initial sleep random time between 2 and 10 seconds
         sleep(randomSleep);
         fflush(stdout);
 
-        while (args->leftGrabbed == 0)
+        while (leftGrabbed == 0)
         {
             sleep(5);
             if (grabLeft(args) == 1)
             {
                 printf("Thread %d grabbed left chopstick, waiting...\n", args->id);
                 fflush(stdout);
-                args->leftGrabbed = 1;
-                randomSleep = (rand() % 3) + 1;
+                leftGrabbed = 1; //Sets left fork to grabbed
+                randomSleep = (rand() % 2) + 1; //Random time between 1 - 3 seconds
                 sleep(randomSleep);
             }
             else
             {
-                printf("Thread %d tried to grab its left chopstick\n", args->id);
+                printf("Thread %d tried to grab its left chopstick\n", args->id); //If it fails to grab chopstick
                 fflush(stdout);
             }
         }
-        while (args->rightGrabbed == 0)
+        while (rightGrabbed == 0)
         {
             sleep(5);
             if (grabRight(args) == 1)
             {
                 printf("Thread %d grabbed right chopstick, eating...\n", args->id);
                 fflush(stdout);
-                args->rightGrabbed = 1;
-                randomSleep = (rand() % 10) + 10;
+                rightGrabbed = 1; //Sets right fork to grabbed
+                randomSleep = (rand() % 10) + 10; //Random wait from 10 - 20 seconds
                 sleep(randomSleep);
             }
             else
             {
-                printf("Thread %d tried to grab its right chopstick\n", args->id);
+                printf("Thread %d tried to grab its right chopstick\n", args->id); //If it fails to grab chopstick
                 fflush(stdout);
             }
         }
-        printf("Thread %d lays down its chopsticks on the table\n", args->id);
+        printf("Thread %d lays down its chopsticks on the table\n", args->id); //Has eaten and lays down its forks
         fflush(stdout);
-        args->leftGrabbed = 0;
-        args->rightGrabbed = 0;
+        leftGrabbed = 0;
+        rightGrabbed = 0;
         releaseChopsticks(args);
     }
     free(args);
@@ -178,8 +179,7 @@ int main(int argc, char **argv)
     unsigned int id = 0;
     unsigned int nThreads = 5;
 
-    struct tableContent chopsticks[5];
-    initChopsticks(chopsticks);
+    initChopsticks(); //Inits chopsticks before other threads start working on it
 
     struct threadArgs *args;
 
@@ -188,11 +188,8 @@ int main(int argc, char **argv)
     children = malloc(nThreads * sizeof(pthread_t));
     for (id = 0; id < nThreads; id++)
     {
-        args = malloc(sizeof(struct threadArgs));
+        args = malloc(sizeof(struct threadArgs)); //Allocates args for thread
         args->id = id;
-        args->chopsticks = chopsticks;
-        args->leftGrabbed = 0;
-        args->rightGrabbed = 0;
         fflush(stdout);
         pthread_create(&(children[id]), NULL, child, (void *)args);
     }
