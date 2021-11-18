@@ -1,19 +1,19 @@
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
-#include <limits.h>
-#include <time.h> 
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 #define PERMS 0644
 
 struct my_msgbuf {
    long mtype;
-   int intBuf; //Integer to be sent
+   int intBuf;  // Integer to be sent
 };
 
 int main(void) {
@@ -22,7 +22,7 @@ int main(void) {
    int len;
    key_t key;
    time_t t;
-   srand((unsigned) time(&t));
+   srand((unsigned)time(&t));
    int bufInt = 0;
 
    if ((key = ftok("msgq.txt", 'B')) == -1) {
@@ -30,7 +30,7 @@ int main(void) {
       exit(1);
    }
 
-   if ((msqid = msgget(key, PERMS)) == -1) { //Connects to queue
+   if ((msqid = msgget(key, PERMS)) == -1) {  // Connects to queue
       perror("msgget");
       exit(1);
    }
@@ -38,9 +38,11 @@ int main(void) {
    printf("message queue: ready to send messages.\n");
    buf.mtype = 1; /* we don't really care in this case */
 
-   for (int i = 0;i < 50;i++) { //Sends messages for 50 times
-      buf.intBuf = (rand() % INT_MAX * 2) - INT_MIN; //Random number between INT_MAX - INT_MIN
-      printf("Sending iteration: %d Number: %d\n", i, buf.intBuf); //Sends random number
+   for (int i = 0; i < 50; i++) {  // Sends messages for 50 times
+      // Random number between INT_MAX - INT_MIN
+      buf.intBuf = (rand() % INT_MAX * 2) - INT_MIN;
+      printf("Sending iteration: %d Number: %d\n", i, buf.intBuf);
+      // Sends random number
       if (msgsnd(msqid, &buf, sizeof(buf.intBuf), 0) == -1)
          perror("msgsnd");
    }
