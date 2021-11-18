@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 int chopsticks[5]; //Shared chopsticks for the table
+int professorTurn; //Shared integer which decides order of professors
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; //Lock to hinder two professors reading or grabbing chopsticks on the same time
 
 struct threadArgs

@@ -5,14 +5,15 @@
 #include <time.h> /* time */
 #include <unistd.h>
 
+// Shared variables
 pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+int chopsticks[5];
 
 struct threadArgs
 {
     int id;
 };
 
-int chopsticks[5];
 
 void printChops()
 {
@@ -36,8 +37,6 @@ void initChopsticks()
         chopsticks[i] = 1;
     }
 }
-
-// Shared Variables
 
 void releaseChopsticks(void *params)
 {
@@ -123,7 +122,7 @@ void *child(void *params)
 
     while (loopAlways)
     {
-        printf("Thread %d joined the table, waiting...\n", args->id);
+        printf("Professor %d joined the table, waiting...\n", args->id);
         int randomSleep = (rand() % 8) + 2; //Gives initial sleep random time between 2 and 10 seconds
         sleep(randomSleep);
         fflush(stdout);
@@ -131,21 +130,21 @@ void *child(void *params)
         while (leftGrabbed == 0)
         {
             sleep(5);
-            if (grabLeft(args) == 1)
+            if (grabLeft(args) == 1) //Calls on grabLeft, if it succeeds go on
             {
-                printf("Thread %d grabbed left chopstick, waiting...\n", args->id);
+                printf("Professor %d grabbed left chopstick, waiting...\n", args->id);
                 fflush(stdout);
                 leftGrabbed = 1; //Sets left fork to grabbed
                 randomSleep = (rand() % 2) + 1; //Random time between 1 - 3 seconds
                 sleep(randomSleep);
             }
-            else
+            else //If it fails 
             {
-                printf("Thread %d tried to grab its left chopstick\n", args->id); //If it fails to grab chopstick
+                printf("Professor %d tried to grab its left chopstick\n", args->id); //If it fails to grab chopstick
                 fflush(stdout);
             }
         }
-        while (rightGrabbed == 0)
+        while (rightGrabbed == 0) //Calls on grabRight, if it succeeds go on
         {
             sleep(5);
             if (grabRight(args) == 1)
@@ -156,7 +155,7 @@ void *child(void *params)
                 randomSleep = (rand() % 10) + 10; //Random wait from 10 - 20 seconds
                 sleep(randomSleep);
             }
-            else
+            else //If it fails 
             {
                 printf("Thread %d tried to grab its right chopstick\n", args->id); //If it fails to grab chopstick
                 fflush(stdout);
