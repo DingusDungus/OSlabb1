@@ -52,6 +52,7 @@ int main(int argc, char** argv) {
             while (shmp->empty == 0)
                 ;
             shmp->buffer[index] = var1;  // Writes to given position
+            printf("Sent %d to index %d\n", var1, index);
             shmp->sent++;                // Increases sent amount
             index++;  // Increments index so producer writes on next position in
                       // array in next loop

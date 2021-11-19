@@ -11,7 +11,7 @@
 #include <pthread.h>
 
 #define SIZE 1024
-#define NR_OF_THREADS 8
+#define NR_OF_THREADS 256
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
@@ -93,7 +93,6 @@ void *child(void *params)
     free(args);
     return NULL;
 }
-
 
 int main(int argc, char **argv)
 {

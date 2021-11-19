@@ -11,7 +11,7 @@
 #include <pthread.h>
 
 #define SIZE 1024
-#define NR_OF_THREADS 128
+#define NR_OF_THREADS 256
 
 static double a[SIZE][SIZE];
 static double b[SIZE][SIZE];
@@ -91,7 +91,6 @@ void *child(void *params)
     struct threadArgs *args = (struct threadArgs *)params;
     int start = args->start;
     int end = args->end;
-    printf("My start is %d and my end is %d\n", start, end);
     init_matrix(start, end);
     pthread_barrier_wait(&barrier);
     mulRow(start, end);
